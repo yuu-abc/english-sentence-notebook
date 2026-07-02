@@ -1,0 +1,19 @@
+{
+  "name": "英文ノート",
+  "short_name": "英文ノート",
+  "description": "好きな英文・和訳・単語・文法をブラウザ内に保存して学べる静的PWAです。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6fb",
+  "theme_color": "#5b6ee1",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
