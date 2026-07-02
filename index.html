@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#5b6ee1" />
+  <meta name="description" content="好きな英文・和訳・単語・文法をブラウザ内に保存して学べる静的PWAです。" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="英文ノート" />
   <title>英文ノート｜好きな英文を保存して学ぶ</title>
   <style>
     :root {
@@ -2458,6 +2463,14 @@ ${numberedSentences}
 
     renderList();
     renderViewer();
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(error => {
+          console.warn("Service worker registration failed:", error);
+        });
+      });
+    }
   </script>
 </body>
 </html>

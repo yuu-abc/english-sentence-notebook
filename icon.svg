@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">英文ノート アイコン</title>
+  <desc id="desc">紫色の角丸背景に、英文ノートを表す白いノートと英字が描かれたアイコン。</desc>
+  <rect width="512" height="512" rx="108" fill="#5b6ee1"/>
+  <path d="M142 112h228c24 0 44 20 44 44v248c0 14-12 26-26 26H142c-24 0-44-20-44-44V156c0-24 20-44 44-44Z" fill="#ffffff" opacity="0.96"/>
+  <path d="M142 112h36v318h-36c-24 0-44-20-44-44V156c0-24 20-44 44-44Z" fill="#edf0ff"/>
+  <path d="M205 196h154M205 252h154M205 308h118" stroke="#5b6ee1" stroke-width="24" stroke-linecap="round"/>
+  <path d="M146 164h28M146 220h28M146 276h28M146 332h28" stroke="#4355c7" stroke-width="14" stroke-linecap="round"/>
+  <text x="256" y="392" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="58" font-weight="700" fill="#253047">EN</text>
+</svg>
