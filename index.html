@@ -865,7 +865,8 @@
         <button class="btn soft" id="manualBtn">使い方</button>
         <button class="btn" id="exportBtn">バックアップ</button>
         <button class="btn" id="importFileBtn">復元</button>
-        <input id="importFileInput" type="file" accept="application/json" hidden />
+        <input id="importFileInput" type="file" accept="application/json,.json" hidden />
+        <input id="analysisJsonFileInput" type="file" accept="application/json,.json" hidden />
       </div>
 
       <section id="viewerPanel" class="card panel"></section>
@@ -938,13 +939,14 @@
         <details class="import-box" open>
           <summary>ChatGPTの解析結果で未解析データを更新する</summary>
           <p class="helper">
-            ChatGPTから返ってきたJSON配列を貼り付けると、同じ英文の未解析データへ
-            日本語訳・単語・文法を追加します。
+            ChatGPTから返ってきたJSON配列を貼り付けるか、スマートフォンのファイル選択から .json ファイルを選ぶと、同じ英文の未解析データへ
+            日本語訳・単語・文法を追加します。説明文やコードブロックが混ざっていても自動で取り除きます。
           </p>
           <textarea id="pendingJsonInput" style="min-height:220px;"
             placeholder='[{"title":"...","sentence":"...","translation":"...","words":[],"grammar":[]}]'></textarea>
           <div class="import-actions">
             <button class="btn primary" id="updatePendingFromJsonBtn">未解析データを更新</button>
+            <button class="btn soft" id="loadAnalysisJsonFileBtn">解析JSONファイルを読み込む</button>
           </div>
           <div id="pendingUpdateStatus" class="status-message hidden"></div>
         </details>
@@ -1044,7 +1046,7 @@
             <li>解析したい英文にチェックを入れます。</li>
             <li>「選択した英文の解析依頼をコピー」を押します。</li>
             <li>ChatGPTへ貼り付けて送信します。</li>
-            <li>返ってきたJSON配列を未解析ボックスへ貼り付けます。</li>
+            <li>返ってきたJSON配列を未解析ボックスへ貼り付けるか、「解析JSONファイルを読み込む」から .json ファイルを選びます。</li>
             <li>「未解析データを更新」を押します。</li>
           </ol>
         </section>
@@ -1095,7 +1097,7 @@ Learning a language takes time and patience.</span>
           <h3>JSONを読み込めないとき</h3>
           <p>
             ChatGPTの返答の前後に説明が付いている場合でも、多くは自動で読み取ります。
-            うまくいかない場合は、最初の <b>[</b> から最後の <b>]</b> までをコピーしてください。
+            貼り付け欄では <b>```json</b> や前後の説明文、全角の引用符を自動で整えます。うまくいかない場合も、何件目で失敗したかを日本語で表示します。
           </p>
         </section>
 
@@ -1726,12 +1728,7 @@ ${sentence}
       }
 
       try {
-        const cleaned = raw
-          .replace(/^```json\s*/i, "")
-          .replace(/^```\s*/i, "")
-          .replace(/\s*```$/, "");
-
-        const data = normalizeImportedData(JSON.parse(cleaned));
+        const data = normalizeImportedData(parseAnalysisJson(raw)[0]);
 
         $("#titleInput").value = data.title;
         $("#sentenceInput").value = data.sentence;
@@ -1752,7 +1749,7 @@ ${sentence}
         showToast("解析結果を取り込みました");
       } catch (error) {
         console.error(error);
-        alert("JSONの形式を読み取れませんでした。ChatGPTの返答全体ではなく、{ から } までを貼り付けてください。");
+        alert(getFriendlyJsonError(error));
       }
     }
 
@@ -1957,6 +1954,33 @@ ${numberedSentences}
       }
     }
 
+    function importAnalysisJsonText(raw, options = {}) {
+      try {
+        const list = parseAnalysisJson(raw);
+        const result = applyAnalysisDataList(list);
+
+        saveEntries();
+        renderList(searchInput.value);
+        renderViewer();
+        renderPendingList();
+        showAnalysisImportResult(result);
+        if (result.errors?.length) {
+          alert(`読み込みに失敗した項目があります。\n${result.errors.join("\n")}`);
+        }
+
+        if (options.clearTextArea) {
+          $("#pendingJsonInput").value = "";
+        }
+
+        showToast(`更新${result.updated}件・新規追加${result.added}件・失敗${result.invalid}件`);
+      } catch (error) {
+        console.error(error);
+        const result = { updated: 0, added: 0, invalid: 1 };
+        showAnalysisImportResult(result);
+        alert(getFriendlyJsonError(error));
+      }
+    }
+
     function updatePendingEntriesFromJson() {
       const raw = $("#pendingJsonInput").value.trim();
       if (!raw) {
@@ -1964,91 +1988,19 @@ ${numberedSentences}
         return;
       }
 
-      try {
-        const parsed = JSON.parse(cleanJsonText(raw));
-        const list = Array.isArray(parsed)
-          ? parsed
-          : Array.isArray(parsed.entries)
-            ? parsed.entries
-            : [parsed];
+      importAnalysisJsonText(raw, { clearTextArea: true });
+    }
 
-        const bySentence = new Map(
-          entries.map(entry => [
-            normalizeSentenceForCompare(entry.sentence),
-            entry
-          ])
-        );
-
-        let updated = 0;
-        let added = 0;
-        let invalid = 0;
-
-        list.forEach(rawData => {
-          const data = normalizeImportedData(rawData || {});
-          const sentence = String(data.sentence || "").trim();
-
-          if (!sentence) {
-            invalid += 1;
-            return;
-          }
-
-          const key = normalizeSentenceForCompare(sentence);
-          const existing = bySentence.get(key);
-          const now = new Date().toISOString();
-
-          if (existing) {
-            existing.title = data.title || existing.title;
-            existing.translation = data.translation || existing.translation;
-            existing.tag = data.tag || existing.tag;
-            existing.source = existing.source || data.source || "";
-            existing.note = data.note || existing.note;
-            existing.words = data.words?.length ? data.words : existing.words || [];
-            existing.grammar = data.grammar?.length ? data.grammar : existing.grammar || [];
-            existing.updatedAt = now;
-            updated += 1;
-          } else {
-            const newEntry = {
-              id: uid(),
-              title: data.title || sentence.slice(0, 30),
-              sentence,
-              translation: data.translation || "",
-              tag: data.tag || "",
-              source: data.source || "",
-              note: data.note || "",
-              words: data.words || [],
-              grammar: data.grammar || [],
-              createdAt: now,
-              updatedAt: now
-            };
-            entries.push(newEntry);
-            bySentence.set(key, newEntry);
-            selectedId = newEntry.id;
-            added += 1;
-          }
-        });
-
-        saveEntries();
-        renderList(searchInput.value);
-        renderViewer();
-        renderPendingList();
-
-        const status = $("#pendingUpdateStatus");
-        status.innerHTML = `
-          <div class="result-summary">
-            <div><strong>${updated}</strong>既存データを更新</div>
-            <div><strong>${added}</strong>新しく追加</div>
-            <div><strong>${invalid}</strong>読み取り不可</div>
-          </div>
-        `;
-        status.classList.remove("hidden");
-        $("#pendingJsonInput").value = "";
-        showToast(`${updated}件の未解析データを更新しました`);
-      } catch (error) {
-        console.error(error);
-        alert(
-          "JSONを読み取れませんでした。最初の [ から最後の ] までをコピーして貼り付けてください。"
-        );
-      }
+    function loadAnalysisJsonFile(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        importAnalysisJsonText(reader.result || "");
+      };
+      reader.onerror = () => {
+        showAnalysisImportResult({ updated: 0, added: 0, invalid: 1 });
+        alert("解析JSONファイルをUTF-8として読み込めませんでした。ファイルを確認してください。");
+      };
+      reader.readAsText(file, "UTF-8");
     }
 
     function normalizeSentenceForCompare(sentence = "") {
@@ -2218,26 +2170,136 @@ ${numberedSentences}
     }
 
     function cleanJsonText(raw) {
-      const withoutFence = raw
+      const text = String(raw || "")
+        .replace(/[“”]/g, '"')
+        .replace(/[＂]/g, '"')
         .trim()
         .replace(/^```json\s*/i, "")
         .replace(/^```\s*/i, "")
-        .replace(/\s*```$/, "")
+        .replace(/\s*```$/i, "")
+        .replace(/```json/gi, "")
+        .replace(/```/g, "")
         .trim();
 
-      const arrayStart = withoutFence.indexOf("[");
-      const arrayEnd = withoutFence.lastIndexOf("]");
+      const arrayStart = text.indexOf("[");
+      const arrayEnd = text.lastIndexOf("]");
       if (arrayStart !== -1 && arrayEnd > arrayStart) {
-        return withoutFence.slice(arrayStart, arrayEnd + 1);
+        return text.slice(arrayStart, arrayEnd + 1);
       }
 
-      const objectStart = withoutFence.indexOf("{");
-      const objectEnd = withoutFence.lastIndexOf("}");
+      const objectStart = text.indexOf("{");
+      const objectEnd = text.lastIndexOf("}");
       if (objectStart !== -1 && objectEnd > objectStart) {
-        return withoutFence.slice(objectStart, objectEnd + 1);
+        return text.slice(objectStart, objectEnd + 1);
       }
 
-      return withoutFence;
+      return text;
+    }
+
+    function getFriendlyJsonError(error) {
+      if (error instanceof SyntaxError) {
+        return `JSONの構文エラーです。カンマ、引用符、かっこの閉じ忘れを確認してください。詳細：${error.message}`;
+      }
+      return error.message || "JSONを読み取れませんでした。";
+    }
+
+    function parseAnalysisJson(raw) {
+      const cleaned = cleanJsonText(raw);
+      if (!cleaned) {
+        throw new Error("JSONが空です。");
+      }
+
+      try {
+        const parsed = JSON.parse(cleaned);
+        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed.entries)) return parsed.entries;
+        if (parsed && typeof parsed === "object") return [parsed];
+        throw new Error("JSON配列または単一のJSONオブジェクトを指定してください。");
+      } catch (error) {
+        throw new Error(getFriendlyJsonError(error));
+      }
+    }
+
+    function applyAnalysisDataList(list) {
+      const bySentence = new Map(
+        entries.map(entry => [
+          normalizeSentenceForCompare(entry.sentence),
+          entry
+        ])
+      );
+
+      let updated = 0;
+      let added = 0;
+      let invalid = 0;
+      const errors = [];
+
+      list.forEach((rawData, index) => {
+        if (!rawData || typeof rawData !== "object" || Array.isArray(rawData)) {
+          invalid += 1;
+          errors.push(`${index + 1}件目：JSONオブジェクトではありません。`);
+          return;
+        }
+
+        const data = normalizeImportedData(rawData);
+        const sentence = String(data.sentence || "").trim();
+
+        if (!sentence) {
+          invalid += 1;
+          errors.push(`${index + 1}件目：sentence（英文）が空です。`);
+          return;
+        }
+
+        const key = normalizeSentenceForCompare(sentence);
+        const existing = bySentence.get(key);
+        const now = new Date().toISOString();
+
+        if (existing) {
+          existing.title = data.title || existing.title || sentence.slice(0, 30);
+          existing.translation = data.translation || existing.translation || "";
+          existing.tag = data.tag || existing.tag || "";
+          existing.source = data.source || existing.source || "";
+          existing.note = data.note || existing.note || "";
+          existing.words = data.words || [];
+          existing.grammar = data.grammar || [];
+          existing.updatedAt = now;
+          selectedId = existing.id;
+          updated += 1;
+          return;
+        }
+
+        const newEntry = {
+          id: uid(),
+          title: data.title || sentence.slice(0, 30),
+          sentence,
+          translation: data.translation || "",
+          tag: data.tag || "",
+          source: data.source || "",
+          note: data.note || "",
+          words: data.words || [],
+          grammar: data.grammar || [],
+          capturedAt: data.capturedAt || "",
+          createdAt: now,
+          updatedAt: now
+        };
+        entries.push(newEntry);
+        bySentence.set(key, newEntry);
+        selectedId = newEntry.id;
+        added += 1;
+      });
+
+      return { updated, added, invalid, errors };
+    }
+
+    function showAnalysisImportResult(result) {
+      const status = $("#pendingUpdateStatus");
+      status.innerHTML = `
+        <div class="result-summary">
+          <div><strong>${result.updated}</strong>更新件数</div>
+          <div><strong>${result.added}</strong>新規追加件数</div>
+          <div><strong>${result.invalid}</strong>失敗件数</div>
+        </div>
+      `;
+      status.classList.remove("hidden");
     }
 
     function addEntriesWithDuplicateCheck(dataList, defaultTag = "") {
@@ -2335,12 +2397,7 @@ ${numberedSentences}
       }
 
       try {
-        const parsed = JSON.parse(cleanJsonText(raw));
-        const list = Array.isArray(parsed)
-          ? parsed
-          : Array.isArray(parsed.entries)
-            ? parsed.entries
-            : [parsed];
+        const list = parseAnalysisJson(raw);
 
         const tag = $("#bulkTagInput").value.trim();
         const result = addEntriesWithDuplicateCheck(list, tag);
@@ -2354,9 +2411,7 @@ ${numberedSentences}
         }
       } catch (error) {
         console.error(error);
-        alert(
-          "JSONを読み取れませんでした。最初の [ から最後の ] までをコピーして、もう一度貼り付けてください。"
-        );
+        alert(getFriendlyJsonError(error));
       }
     }
 
@@ -2423,6 +2478,12 @@ ${numberedSentences}
     $("#clearPendingSelectionBtn").addEventListener("click", () => setAllPendingSelection(false));
     $("#copySelectedPendingPromptBtn").addEventListener("click", copySelectedPendingPrompt);
     $("#updatePendingFromJsonBtn").addEventListener("click", updatePendingEntriesFromJson);
+    $("#loadAnalysisJsonFileBtn").addEventListener("click", () => $("#analysisJsonFileInput").click());
+    $("#analysisJsonFileInput").addEventListener("change", event => {
+      const file = event.target.files?.[0];
+      if (file) loadAnalysisJsonFile(file);
+      event.target.value = "";
+    });
     $("#pendingCloseBtn").addEventListener("click", showViewer);
     $("#copyPromptTopBtn").addEventListener("click", copyPrompt);
     $("#bulkPreviewBtn").addEventListener("click", renderBulkPreview);
