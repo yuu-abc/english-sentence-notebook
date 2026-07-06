@@ -8,6 +8,7 @@
 - APIやAPIキーは使用しません。
 - データはブラウザの `localStorage` に保存されます。
 - バックアップと復元はJSONファイルで行えます。
+- お気に入り登録した英文だけを一覧で絞り込めます。
 - `manifest.webmanifest` と `service-worker.js` により、GitHub Pagesのサブディレクトリ配信でもPWAとして利用できます。
 - アプリアイコンはバイナリ画像ではなく、テキスト形式の `icon.svg` です。
 

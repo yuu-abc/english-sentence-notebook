@@ -159,24 +159,47 @@
       border-radius: 11px;
     }
 
-    .entry-delete-btn {
+    .entry-actions {
+      display: grid;
+      gap: 5px;
       align-self: center;
-      min-width: 52px;
       margin-right: 7px;
+    }
+
+    .entry-delete-btn,
+    .entry-favorite-btn {
+      min-width: 52px;
       padding: 7px 9px;
-      color: var(--danger);
-      background: #fff7f8;
-      border: 1px solid #f0cbd0;
+      background: #fff;
+      border: 1px solid var(--line);
       border-radius: 9px;
       font-size: 12px;
       font-weight: 800;
       white-space: nowrap;
     }
 
+    .entry-delete-btn {
+      color: var(--danger);
+      background: #fff7f8;
+      border-color: #f0cbd0;
+    }
+
     .entry-delete-btn:hover {
       color: #fff;
       background: var(--danger);
       border-color: var(--danger);
+    }
+
+    .entry-favorite-btn {
+      color: #917022;
+      background: #fffaf0;
+      border-color: #f0dfb8;
+    }
+
+    .entry-favorite-btn.active {
+      color: #fff;
+      background: #f0a800;
+      border-color: #f0a800;
     }
 
     .entry-title {
@@ -549,6 +572,11 @@
       background: #e8f7f1;
     }
 
+    .entry-status.favorite {
+      color: #7a5a00;
+      background: #fff0bd;
+    }
+
     .pending-grid {
       display: grid;
       gap: 10px;
@@ -644,6 +672,14 @@
       .result-summary {
         grid-template-columns: 1fr;
       }
+    }
+
+    .viewer-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
     }
 
     .viewer-title {
@@ -851,6 +887,7 @@
         <button class="filter-btn active" data-filter="all">すべて</button>
         <button class="filter-btn" data-filter="pending">未解析</button>
         <button class="filter-btn" data-filter="done">解析済み</button>
+        <button class="filter-btn" data-filter="favorite">お気に入り</button>
       </div>
       <div id="entryList" class="entry-list"></div>
     </aside>
@@ -1078,6 +1115,14 @@ Learning a language takes time and patience.</span>
         </section>
 
         <section class="manual-section">
+          <h3>お気に入りで復習する</h3>
+          <p>
+            左の一覧や本文上部の「☆」ボタンから、よく復習したい英文をお気に入りにできます。
+            一覧の「お気に入り」フィルタを押すと、お気に入りにした英文だけを表示できます。
+          </p>
+        </section>
+
+        <section class="manual-section">
           <h3>保存とバックアップ</h3>
           <p>
             データはブラウザ内に保存されます。「バックアップ」でJSONファイルを書き出し、
@@ -1295,7 +1340,8 @@ Learning a language takes time and patience.</span>
         const matchesFilter =
           listFilter === "all" ||
           (listFilter === "pending" && !analyzed) ||
-          (listFilter === "done" && analyzed);
+          (listFilter === "done" && analyzed) ||
+          (listFilter === "favorite" && entry.isFavorite);
 
         return matchesSearch && matchesFilter;
       });
@@ -1324,6 +1370,7 @@ Learning a language takes time and patience.</span>
             <span class="entry-status ${analyzed ? "done" : "pending"}">
               ${analyzed ? "解析済み" : "未解析"}
             </span>
+            ${entry.isFavorite ? '<span class="entry-status favorite">★ お気に入り</span>' : ""}
           `;
 
           openButton.addEventListener("click", () => {
@@ -1331,6 +1378,24 @@ Learning a language takes time and patience.</span>
             renderList(searchInput.value);
             renderViewer();
             showViewer();
+          });
+
+          const actions = document.createElement("div");
+          actions.className = "entry-actions";
+
+          const favoriteButton = document.createElement("button");
+          favoriteButton.className =
+            "entry-favorite-btn" + (entry.isFavorite ? " active" : "");
+          favoriteButton.type = "button";
+          favoriteButton.textContent = entry.isFavorite ? "★" : "☆";
+          favoriteButton.setAttribute(
+            "aria-label",
+            `${entry.title || "この文章"}のお気に入りを切り替え`
+          );
+
+          favoriteButton.addEventListener("click", event => {
+            event.stopPropagation();
+            toggleFavorite(entry.id);
           });
 
           const deleteButton = document.createElement("button");
@@ -1347,10 +1412,24 @@ Learning a language takes time and patience.</span>
             deleteEntryFromList(entry.id);
           });
 
+          actions.appendChild(favoriteButton);
+          actions.appendChild(deleteButton);
           wrapper.appendChild(openButton);
-          wrapper.appendChild(deleteButton);
+          wrapper.appendChild(actions);
           entryList.appendChild(wrapper);
         });
+    }
+
+    function toggleFavorite(id) {
+      const entry = entries.find(item => item.id === id);
+      if (!entry) return;
+
+      entry.isFavorite = !entry.isFavorite;
+      entry.updatedAt = new Date().toISOString();
+      saveEntries();
+      renderList(searchInput.value);
+      renderViewer();
+      showToast(entry.isFavorite ? "お気に入りに追加しました" : "お気に入りを解除しました");
     }
 
     function deleteEntryFromList(id) {
@@ -1418,8 +1497,16 @@ Learning a language takes time and patience.</span>
         : '<p class="helper">文法はまだ登録されていません。</p>';
 
       viewerPanel.innerHTML = `
-        <h2 class="viewer-title">${escapeHtml(entry.title || "無題")}</h2>
-        ${entry.tag ? `<span class="tag">${escapeHtml(entry.tag)}</span>` : ""}
+        <div class="viewer-head">
+          <div>
+            <h2 class="viewer-title">${escapeHtml(entry.title || "無題")}</h2>
+            ${entry.tag ? `<span class="tag">${escapeHtml(entry.tag)}</span>` : ""}
+            ${entry.isFavorite ? '<span class="tag">★ お気に入り</span>' : ""}
+          </div>
+          <button class="btn soft small" id="toggleFavoriteBtn">
+            ${entry.isFavorite ? "★ お気に入り解除" : "☆ お気に入りに追加"}
+          </button>
+        </div>
 
         <div class="sentence-box">
           <p class="sentence">${escapeHtml(entry.sentence)}</p>
@@ -1446,6 +1533,7 @@ Learning a language takes time and patience.</span>
         ${entry.source ? `<p class="helper" style="margin-top:18px;">出典・メモ：${escapeHtml(entry.source)}</p>` : ""}
       `;
 
+      $("#toggleFavoriteBtn")?.addEventListener("click", () => toggleFavorite(entry.id));
       $("#speakBtn")?.addEventListener("click", () => speak(entry.sentence));
       $("#copySentenceBtn")?.addEventListener("click", async () => {
         await copyText(entry.sentence);
@@ -1612,7 +1700,8 @@ Learning a language takes time and patience.</span>
         words: collectWords(),
         grammar: collectGrammar(),
         createdAt: existing?.createdAt || now,
-        updatedAt: now
+        updatedAt: now,
+        isFavorite: existing?.isFavorite || false
       };
 
       if (existing) {
@@ -1716,7 +1805,8 @@ ${sentence}
         note: data.note || "",
         words: Array.isArray(data.words) ? data.words : [],
         grammar: Array.isArray(data.grammar) ? data.grammar : [],
-        capturedAt: data.capturedAt || ""
+        capturedAt: data.capturedAt || "",
+        isFavorite: Boolean(data.isFavorite)
       };
     }
 
@@ -2261,6 +2351,7 @@ ${numberedSentences}
           existing.note = data.note || existing.note || "";
           existing.words = data.words || [];
           existing.grammar = data.grammar || [];
+          existing.isFavorite = existing.isFavorite || Boolean(data.isFavorite);
           existing.updatedAt = now;
           selectedId = existing.id;
           updated += 1;
@@ -2279,7 +2370,8 @@ ${numberedSentences}
           grammar: data.grammar || [],
           capturedAt: data.capturedAt || "",
           createdAt: now,
-          updatedAt: now
+          updatedAt: now,
+          isFavorite: Boolean(data.isFavorite)
         };
         entries.push(newEntry);
         bySentence.set(key, newEntry);
@@ -2339,7 +2431,8 @@ ${numberedSentences}
           grammar: data.grammar,
           capturedAt: data.capturedAt || "",
           createdAt: now,
-          updatedAt: now
+          updatedAt: now,
+          isFavorite: Boolean(data.isFavorite)
         };
 
         entries.push(entry);

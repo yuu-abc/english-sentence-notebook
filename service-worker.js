@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "english-sentence-notebook-v1";
+const CACHE_NAME = "english-sentence-notebook-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
