@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>英語センテンスノート</title>
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#4355c7">
+  <style>
+    :root {
+      --bg: #f3f5ff;
+      --panel: #ffffff;
+      --panel-soft: #fbfcff;
+      --text: #253047;
+      --muted: #576178;
+      --primary: #4355c7;
+      --primary-dark: #3443a3;
+      --accent: #2e9d8f;
+      --accent-soft: #e8f7f4;
+      --line: #dce2f2;
+      --danger: #c84040;
+      --danger-soft: #fff0f0;
+      --warning: #a46b00;
+      --warning-soft: #fff6df;
+      --shadow: 0 16px 38px rgba(37, 48, 71, 0.12);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(67, 85, 199, 0.18), transparent 30rem),
+        radial-gradient(circle at top right, rgba(46, 157, 143, 0.14), transparent 26rem),
+        var(--bg);
+      line-height: 1.7;
+    }
+
+    header {
+      padding: 42px 20px 20px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.9rem, 5vw, 3rem);
+      letter-spacing: 0.04em;
+    }
+
+    .lead {
+      max-width: 780px;
+      margin: 0 auto;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    main {
+      width: min(1120px, calc(100% - 28px));
+      margin: 0 auto 56px;
+    }
+
+    section, .card {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(234, 222, 209, 0.9);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    section { padding: clamp(18px, 3vw, 28px); margin-top: 20px; }
+
+    h2, h3 { line-height: 1.35; margin: 0; }
+    h2 { font-size: 1.35rem; margin-bottom: 14px; }
+    h3 { font-size: 1.05rem; margin-bottom: 10px; }
+
+    textarea {
+      width: 100%;
+      min-height: 250px;
+      padding: 16px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel-soft);
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.95rem;
+      line-height: 1.65;
+      outline: none;
+    }
+
+    textarea:focus, input:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(67, 85, 199, 0.14);
+    }
+
+    .button-row, .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 14px;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 11px 18px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 8px 18px rgba(67, 85, 199, 0.22);
+    }
+
+    button:hover { transform: translateY(-1px); background: var(--primary-dark); }
+    button.secondary { background: var(--accent); box-shadow: 0 8px 18px rgba(46, 157, 143, 0.18); }
+    button.secondary:hover { background: #237e73; }
+    button.ghost { background: #eef1fa; color: var(--text); box-shadow: none; }
+    button.danger { background: var(--danger); box-shadow: 0 8px 18px rgba(200, 64, 64, 0.18); }
+
+    input, select {
+      min-height: 46px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0 15px;
+      background: #fff;
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .search-input { flex: 1 1 260px; }
+    .status { margin-top: 12px; padding: 12px 14px; border-radius: 16px; display: none; font-weight: 700; }
+    .status.show { display: block; }
+    .status.success { background: var(--accent-soft); color: #1f766c; }
+    .status.error { background: var(--danger-soft); color: var(--danger); }
+    .status.info { background: var(--warning-soft); color: var(--warning); }
+
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 18px 0; }
+    .tab-button { background: #eef1fa; color: var(--text); box-shadow: none; }
+    .list-toggle { background: #eef1fa; color: var(--text); box-shadow: none; }
+    .list-toggle:hover { background: #dce2f2; }
+    .list-toggle[aria-pressed="true"] { background: var(--warning); color: #fff; box-shadow: 0 8px 18px rgba(164, 107, 0, 0.2); }
+    .tab-button.active { background: var(--primary); color: #fff; box-shadow: 0 8px 18px rgba(67, 85, 199, 0.22); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .flow { display: grid; gap: 10px; grid-template-columns: repeat(4, 1fr); margin: 12px 0 18px; }
+    .flow-step { padding: 12px; border: 1px solid var(--line); border-radius: 16px; background: #f6f7ff; font-weight: 800; text-align: center; }
+    .help { color: var(--muted); margin: 8px 0 12px; }
+    .prompt-output { min-height: 320px; }
+    .original-japanese { margin: 12px 0; padding: 12px 14px; border-radius: 14px; background: #f8fcfb; border: 1px solid #d8efeb; }
+    .original-japanese strong { color: #21786e; }
+    .word-cell { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .small-button { padding: 7px 10px; font-size: 0.8rem; box-shadow: none; }
+    .preview { display: grid; gap: 12px; margin-top: 16px; }
+    .preview-item { min-width: 0; margin: 0; padding: 14px; border: 1px dashed var(--line); border-radius: 16px; background: #f6f7ff; }
+    .import-source { display: block; font-weight: 700; }
+    #textInput { min-height: 180px; margin-top: 6px; font-family: inherit; font-size: 1rem; }
+    .backup-details { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 8px; }
+    .backup-details summary, .preview-item summary { cursor: pointer; font-weight: 700; padding: 8px 0; }
+    .backup-details input[type=file] { max-width: 100%; min-height: 0; padding: 8px; border-radius: 12px; }
+    .preview-item label { display: block; margin-top: 10px; font-weight: 700; }
+    .preview-item input, .preview-item textarea { display: block; width: 100%; margin-top: 4px; font: inherit; font-size: 1rem; }
+    .preview-item textarea { min-height: 86px; padding: 8px 12px; border-radius: 12px; }
+
+    .stats { color: var(--muted); font-weight: 700; margin-left: auto; }
+    .cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: 18px; }
+    .empty { padding: 34px; text-align: center; color: var(--muted); background: rgba(255,255,255,0.75); border: 1px dashed var(--line); border-radius: var(--radius); }
+
+    .card { min-width: 0; }
+    .card-summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 8px; }
+    .card-toggle {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px;
+      width: 100%; min-height: 44px; padding: 6px 8px; text-align: start;
+      border-radius: 12px; background: transparent; color: var(--text); box-shadow: none;
+    }
+    .card-toggle:hover { background: var(--panel-soft); transform: none; }
+    .card-toggle:focus-visible, .card-audio:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .card-summary-text { min-width: 0; overflow-wrap: anywhere; }
+    .card-sentence, .card-summary-translation { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-sentence { font-family: inherit; font-size: clamp(1.1rem, 4vw, 1.55rem); line-height: 1.35; -webkit-line-clamp: 2; }
+    .card-summary-translation { margin-top: 3px; color: var(--muted); font-size: 0.85rem; font-weight: 400; -webkit-line-clamp: 1; }
+    .hide-translations .card-summary-translation, .card-toggle[aria-expanded="true"] .card-summary-translation { display: none; }
+    .card-toggle[aria-expanded="true"] .card-sentence { display: block; }
+    .card-toggle[aria-expanded="true"] .card-chevron { transform: rotate(180deg); }
+    .card-audio { width: auto; min-height: 44px; padding-inline: 12px; white-space: nowrap; box-shadow: none; }
+    .card-details { padding: 12px clamp(14px, 3vw, 26px) 18px; border-top: 1px solid var(--line); }
+    .card-head { display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .tag { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 999px; background: var(--accent-soft); color: #21786e; font-weight: 800; font-size: 0.85rem; }
+    .source { color: var(--muted); font-size: 0.9rem; margin-top: 6px; }
+    .pronunciation { color: var(--primary-dark); font-size: clamp(1.05rem, 3.6vw, 1.35rem); font-weight: 700; }
+    .translation { margin: 16px 0; padding: 14px 16px; border-left: 5px solid var(--primary); border-radius: 14px; background: #eef1ff; font-weight: 700; }
+    .note { color: var(--muted); background: #fbf7f1; border-radius: 14px; padding: 12px 14px; }
+    .card-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; }
+    table { width: 100%; border-collapse: collapse; min-width: 680px; background: #fff; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { background: #eef1ff; white-space: nowrap; }
+    tr:last-child td { border-bottom: 0; }
+
+    .grammar-list { display: grid; gap: 10px; }
+    .grammar-item { padding: 12px 14px; background: #f8fcfb; border: 1px solid #d8efeb; border-radius: 14px; }
+    .grammar-name { font-weight: 800; color: #21786e; }
+    .subsection { margin-top: 18px; }
+
+    @media (max-width: 680px) {
+      header { padding-top: 30px; }
+      main { width: min(100% - 20px, 1120px); }
+      section { padding: 16px; }
+      button { width: 100%; text-align: center; }
+      .card-toggle { text-align: start; }
+      .card-audio { width: auto; }
+      .toolbar { align-items: stretch; }
+      input, select { width: 100%; }
+      .stats { width: 100%; margin-left: 0; }
+      .card-head { flex-direction: column; }
+      .card-actions { width: 100%; }
+      .flow { grid-template-columns: 1fr; }
+      .tabs { flex-direction: column; }
+      .tab-button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>英語センテンスノート</h1>
+    <p class="lead">ChatGPTの回答を貼り付けて、英文・日本語訳・そのまま使える表現・文法を学習カードにできます。</p>
+  </header>
+
+  <main>
+    <div class="tabs" role="tablist" aria-label="機能切り替え">
+      <button class="tab-button active" data-tab="create" role="tab" aria-selected="true">日本語から作る</button>
+      <button class="tab-button" data-tab="import" role="tab" aria-selected="false">貼り付けて取り込む</button>
+      <button class="tab-button" data-tab="list" role="tab" aria-selected="false">カード一覧</button>
+    </div>
+
+    <section id="createPanel" class="tab-panel active" aria-labelledby="create-heading">
+      <h2 id="create-heading">日本語から作る</h2>
+      <div class="flow" aria-label="使い方の流れ">
+        <div class="flow-step">1. 日本語を入力</div>
+        <div class="flow-step">2. ChatGPTで翻訳</div>
+        <div class="flow-step">3. 回答を貼り付け</div>
+        <div class="flow-step">4. カード保存</div>
+      </div>
+      <p class="help">複数の日本語文を改行区切りで入力できます。</p>
+      <textarea id="japaneseInput" placeholder="例：
+今日は天気がいいです。
+週末に友達と映画を見に行きます。"></textarea>
+      <div class="button-row">
+        <button id="promptButton">ChatGPT用プロンプトを作成</button>
+        <button id="copyPromptButton" class="secondary">コピー</button>
+      </div>
+      <p class="help">プロンプトをChatGPTに送ったら、回答をコピーして「貼り付けて取り込む」タブに貼り付けてください。</p>
+      <textarea id="promptOutput" class="prompt-output" readonly placeholder="ここにChatGPT用プロンプトが表示されます"></textarea>
+      <div id="promptMessage" class="status" role="status"></div>
+    </section>
+
+    <section id="importPanel" class="tab-panel" aria-labelledby="import-heading">
+      <h2 id="import-heading">貼り付けて取り込む</h2>
+      <label class="import-source" for="textInput">ChatGPTの回答</label>
+      <p class="help" id="textHelp">「英語」「日本語訳」「単語・表現」などの見出し付きの回答を貼り付けてください。英語だけの1行も登録できます。</p>
+      <textarea id="textInput" aria-describedby="textHelp" placeholder="英語：I’m going out with friends this weekend.&#10;日本語訳：今週末は友達と出かけます。"></textarea>
+      <div class="button-row">
+        <button id="textPreviewButton" type="button">取り込み内容を確認</button>
+      </div>
+      <div id="textMessage" class="status" role="status"></div>
+      <form id="textForm"></form>
+    </section>
+
+    <section id="listPanel" class="tab-panel" aria-labelledby="list-heading">
+      <h2 id="list-heading">カード一覧</h2>
+      <div id="listMessage" class="status" role="status"></div>
+      <div class="toolbar">
+        <input id="searchInput" class="search-input" type="search" placeholder="英語・発音記号・日本語訳・単語を検索">
+        <select id="tagFilter" aria-label="タグで絞り込み">
+          <option value="">すべてのタグ</option>
+        </select>
+        <button id="favoriteFilterButton" class="list-toggle" type="button" aria-pressed="false">☆ お気に入りのみ</button>
+        <button id="hideTranslationsButton" class="list-toggle" type="button" aria-pressed="false">日本語訳を隠す</button>
+        <button id="deleteAllButton" class="danger">全削除</button>
+        <span id="stats" class="stats"></span>
+      </div>
+      <details class="backup-details">
+        <summary>バックアップ</summary>
+        <p class="help">保存したファイルからカードを追加できます。</p>
+        <div class="button-row">
+          <button id="exportButton" class="secondary" type="button">バックアップを書き出す</button>
+          <input id="backupFile" type="file" accept="application/json,.json" aria-label="バックアップファイルを選ぶ">
+          <button id="restoreBackupButton" type="button" hidden>ファイルからカードを追加</button>
+        </div>
+        <div id="backupMessage" class="status" role="status"></div>
+      </details>
+      <div id="cards" class="cards"></div>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = 'english-sentence-notebook.cards.v1';
+    const japaneseInput = document.getElementById('japaneseInput');
+    const promptOutput = document.getElementById('promptOutput');
+    const promptMessage = document.getElementById('promptMessage');
+    const textInput = document.getElementById('textInput');
+    const textForm = document.getElementById('textForm');
+    const textMessage = document.getElementById('textMessage');
+    const listMessage = document.getElementById('listMessage');
+    const cardsEl = document.getElementById('cards');
+    const searchInput = document.getElementById('searchInput');
+    const tagFilter = document.getElementById('tagFilter');
+    const favoriteFilterButton = document.getElementById('favoriteFilterButton');
+    const hideTranslationsButton = document.getElementById('hideTranslationsButton');
+    const stats = document.getElementById('stats');
+    const backupFile = document.getElementById('backupFile');
+    const backupMessage = document.getElementById('backupMessage');
+    const restoreBackupButton = document.getElementById('restoreBackupButton');
+    let pendingBackup = [];
+    let cards = loadCards();
+    let showFavoritesOnly = false;
+    let visibleCards = [];
+    let openCard = null;
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
+    }
+
+    function showMessage(text, type = 'info', target = listMessage) {
+      target.textContent = text;
+      target.className = `status show ${type}`;
+    }
+
+    function parseBackup(text) {
+      const parsed = JSON.parse(text);
+      const items = Array.isArray(parsed) ? parsed : [parsed];
+      if (!items.every(item => item && typeof item === 'object' && !Array.isArray(item))) {
+        throw new Error('Invalid backup');
+      }
+      return items.map(normalizeCard);
+    }
+
+    function normalizeCard(item) {
+      return {
+        id: item.id || `card-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        title: item.title || '無題のカード',
+        sentence: item.sentence || '',
+        pronunciation: item.pronunciation || '',
+        translation: item.translation || '',
+        tag: item.tag || '未分類',
+        originalJapanese: item.originalJapanese || '',
+        source: item.source || '',
+        note: item.note || '',
+        words: Array.isArray(item.words) ? item.words.map(word => ({
+          word: word.word || '',
+          pronunciation: word.pronunciation || '',
+          meaning: word.meaning || '',
+          partOfSpeech: word.partOfSpeech || '',
+          note: word.note || ''
+        })) : [],
+        grammar: Array.isArray(item.grammar) ? item.grammar.map(rule => ({
+          target: rule.target || '',
+          name: rule.name || '',
+          explanation: rule.explanation || ''
+        })) : [],
+        favorite: Boolean(item.favorite),
+        createdAt: item.createdAt || new Date().toISOString()
+      };
+    }
+
+    function loadCards() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]').map(normalizeCard); }
+      catch { return []; }
+    }
+
+    function saveCards(nextCards = cards) { localStorage.setItem(STORAGE_KEY, JSON.stringify(nextCards)); }
+
+    function registerCards(items) {
+      const nextCards = [...items, ...cards];
+      try { saveCards(nextCards); }
+      catch { throw new Error('端末に保存できませんでした。入力内容を残したまま、ブラウザの保存設定や空き容量を確認してください。'); }
+      cards = nextCards;
+      searchInput.value = '';
+      tagFilter.value = '';
+      showFavoritesOnly = false;
+      openCard = null;
+      switchTab('list');
+      render();
+      showMessage(`${items.length}件のカードを登録しました。`, 'success', listMessage);
+    }
+
+    function updateTags() {
+      const current = tagFilter.value;
+      const tags = [...new Set(cards.map(card => card.tag).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ja'));
+      tagFilter.innerHTML = '<option value="">すべてのタグ</option>' + tags.map(tag => `<option value="${escapeHtml(tag)}">${escapeHtml(tag)}</option>`).join('');
+      tagFilter.value = tags.includes(current) ? current : '';
+    }
+
+    function getFilteredCards() {
+      const keyword = searchInput.value.trim().toLowerCase();
+      const tag = tagFilter.value;
+      return cards.filter(card => {
+        const haystack = [card.title, card.originalJapanese, card.sentence, card.pronunciation, card.translation, card.note, card.tag, ...card.words.flatMap(w => [w.word, w.pronunciation, w.meaning, w.note]), ...card.grammar.flatMap(g => [g.target, g.name, g.explanation])].join(' ').toLowerCase();
+        return (!showFavoritesOnly || card.favorite) && (!tag || card.tag === tag) && (!keyword || haystack.includes(keyword));
+      });
+    }
+
+    function render() {
+      updateTags();
+      visibleCards = getFilteredCards();
+      if (!visibleCards.includes(openCard)) openCard = null;
+      favoriteFilterButton.setAttribute('aria-pressed', String(showFavoritesOnly));
+      favoriteFilterButton.textContent = showFavoritesOnly ? '★ お気に入りのみ表示中' : '☆ お気に入りのみ';
+      stats.textContent = `${visibleCards.length} / ${cards.length}件表示`;
+      if (!visibleCards.length) {
+        cardsEl.innerHTML = '<div class="empty">表示するカードがありません。</div>';
+        return;
+      }
+      cardsEl.innerHTML = visibleCards.map(renderCard).join('');
+    }
+
+    function renderCard(card, index) {
+      const expanded = card === openCard;
+      return `
+        <article class="card" data-card-index="${index}">
+          <div class="card-summary">
+            <button class="card-toggle" type="button" data-action="toggle" aria-expanded="${expanded}" aria-controls="card-details-${index}">
+              <span class="card-summary-text">
+                <span class="card-sentence" lang="${card.sentence ? 'en-US' : 'ja'}">${escapeHtml(card.sentence || '（英文なし）')}</span>
+                ${card.translation ? `<span class="card-summary-translation">${escapeHtml(card.translation)}</span>` : ''}
+              </span>
+              <span class="card-chevron" aria-hidden="true">▾</span>
+            </button>
+            ${card.sentence ? `<button class="secondary card-audio" type="button" data-action="speak" data-text="${escapeHtml(card.sentence)}" aria-label="英語を聞く">発音</button>` : ''}
+          </div>
+          <div class="card-details" id="card-details-${index}"${expanded ? '' : ' hidden'}>
+            <div class="card-head">
+              <div>
+                <span class="tag"># ${escapeHtml(card.tag)}</span>
+                <h3>${escapeHtml(card.title)}</h3>
+                ${card.source ? `<div class="source">出典：${escapeHtml(card.source)}</div>` : ''}
+              </div>
+              <div class="card-actions">
+                <button class="ghost" type="button" data-action="favorite">${card.favorite ? '★ お気に入り済み' : '☆ お気に入り'}</button>
+                <button class="danger" type="button" data-action="delete">削除</button>
+              </div>
+            </div>
+            ${card.originalJapanese ? `<div class="original-japanese"><strong>元の日本語：</strong>${escapeHtml(card.originalJapanese)}</div>` : ''}
+            ${card.pronunciation ? `<div class="pronunciation">${escapeHtml(card.pronunciation)}</div>` : ''}
+            <div class="translation">${escapeHtml(card.translation || '（日本語訳なし）')}</div>
+            ${card.note ? `<div class="note">メモ：${escapeHtml(card.note)}</div>` : ''}
+            <div class="subsection"><h3>単語・表現</h3>${renderWords(card.words)}</div>
+            <div class="subsection"><h3>文法解説</h3>${renderGrammar(card.grammar)}</div>
+          </div>
+        </article>`;
+    }
+
+    function setCardExpanded(button, expanded) {
+      button.setAttribute('aria-expanded', String(expanded));
+      document.getElementById(button.getAttribute('aria-controls')).hidden = !expanded;
+    }
+
+    function renderWords(words) {
+      if (!words.length) return '<p class="note">単語・表現はありません。</p>';
+      return `<div class="table-wrap"><table><thead><tr><th>単語・表現</th><th>発音記号</th><th>意味</th><th>品詞</th><th>メモ</th></tr></thead><tbody>${words.map(w => `<tr><td><div class="word-cell"><span>${escapeHtml(w.word)}</span><button class="secondary small-button" data-action="speak" data-text="${escapeHtml(w.word)}">表現を聞く</button></div></td><td>${escapeHtml(w.pronunciation)}</td><td>${escapeHtml(w.meaning)}</td><td>${escapeHtml(w.partOfSpeech)}</td><td>${escapeHtml(w.note)}</td></tr>`).join('')}</tbody></table></div>`;
+    }
+
+    function renderGrammar(grammar) {
+      if (!grammar.length) return '<p class="note">文法解説はありません。</p>';
+      return `<div class="grammar-list">${grammar.map(g => `<div class="grammar-item"><div class="grammar-name">${escapeHtml(g.name || '文法ポイント')}</div><div><strong>${escapeHtml(g.target)}</strong></div><div>${escapeHtml(g.explanation)}</div></div>`).join('')}</div>`;
+    }
+
+    const textFields = [
+      { key: 'sentence', label: '英語', aliases: ['英文', '英語訳', 'English', 'English sentence'] },
+      { key: 'pronunciation', label: '発音記号', aliases: ['IPA', 'Pronunciation'] },
+      { key: 'translation', label: '日本語訳', aliases: ['日本語', '和訳', '訳', 'Japanese', 'Translation'] },
+      { key: 'words', label: '単語・表現', aliases: ['単語', '表現', '重要表現', '語彙', 'Vocabulary', 'Expressions'], multiline: true },
+      { key: 'grammar', label: '文法', aliases: ['文法解説', '文法ポイント', '解説', 'Grammar'], multiline: true },
+      { key: 'title', label: 'タイトル', aliases: [] },
+      { key: 'originalJapanese', label: '元の日本語', aliases: ['日本語原文'] },
+      { key: 'tag', label: 'タグ', aliases: [] },
+      { key: 'source', label: '出典', aliases: [] },
+      { key: 'note', label: 'メモ', aliases: ['学習ポイント', '補足'], multiline: true }
+    ];
+    const textLabels = new Map(textFields.flatMap(field =>
+      [field.label, ...field.aliases].map(label => [label.toLowerCase(), field])
+    ));
+    const headingNames = [...textLabels.keys()].sort((a, b) => b.length - a.length).join('|');
+    const textHeadingPattern = new RegExp(
+      '「[^」]*」|『[^』]*』|“[^”]*”|"[^"]*"'
+      + '|【(' + headingNames + ')】\\s*[:：]?'
+      + '|(' + headingNames + ')(?:\\s*[（(][^）)]+[）)])?\\s*[:：]',
+      'giu'
+    );
+
+    function cleanTextLine(line) {
+      return line.trim()
+        .replace(/^(?:>\s*)+/, '')
+        .replace(/^#{1,6}\s+/, '')
+        .replace(/^(?:[-*•]\s+|\d+[.)、]\s*)/, '')
+        .replace(/\*\*([^*]+)\*\*|__([^_]+)__|\x60([^\x60]+)\x60/g, (_, bold, underline, code) => bold ?? underline ?? code)
+        .trim();
+    }
+
+    function readTextLine(line, pendingField) {
+      // Copying a rendered answer can put several labeled fields on one line.
+      const headings = [];
+      for (const match of line.matchAll(textHeadingPattern)) {
+        const label = (match[1] ?? match[2])?.toLowerCase();
+        if (!label) continue; // Quoted text belongs to the surrounding field.
+        const field = textLabels.get(label);
+        if (!headings.length && match.index !== 0) {
+          if (!pendingField) break;
+          headings.push({ field: pendingField, start: 0, end: 0 });
+        }
+        const previous = headings.at(-1);
+        if (previous) {
+          const before = line.slice(previous.end, match.index);
+          const cardSeparator = /(?:-{3,}|—{2,}|_{3,})\s*$/.test(before);
+          if (field.key === 'sentence' && previous.field.key === 'sentence' && !match[1] && !cardSeparator) continue;
+          const separated = match[1] || /[\s。！？.!?](?:[-*•・][ \t　]*)?$/.test(before);
+          const followsWordList = previous.field.key === 'words' && field.key === 'grammar';
+          if (!separated && (label === '訳' || (previous.field.multiline && !followsWordList && field.key !== 'sentence'))) {
+            continue;
+          }
+        }
+        headings.push({ field, start: match.index, end: match.index + match[0].length });
+      }
+
+      if (!headings.length) {
+        const field = textLabels.get(line.toLowerCase());
+        return [{ field, value: field ? '' : line }];
+      }
+      return headings.map(({ field, end }, index) => {
+        const next = headings[index + 1];
+        let value = line.slice(end, next?.start).trim();
+        if (next) value = value.replace(/\s+[-*•・]$/, '').trimEnd();
+        if (next?.field.key === 'sentence') value = value.replace(/(?:-{3,}|—{2,}|_{3,})$/, '').trimEnd();
+        return { field, value };
+      });
+    }
+
+    function parseText(raw) {
+      const lines = raw.split(/\r\n|[\r\n\u2028\u2029]/).map(cleanTextLine);
+      const drafts = [];
+      let draft = {};
+      let activeField;
+      let sawHeading = false;
+      function finishDraft() {
+        if (Object.values(draft).some(Boolean)) drafts.push(draft);
+        draft = {};
+        activeField = undefined;
+      }
+
+      for (const line of lines) {
+        if (/^(?:-{3,}|—{2,}|_{3,})$/.test(line)) {
+          if (draft.sentence) finishDraft();
+          continue;
+        }
+        if (/^(?:\x60{3,}|~{3,})/.test(line)) continue;
+        if (!line) {
+          if (activeField && draft[activeField.key]) activeField = undefined;
+          continue;
+        }
+        const pendingField = activeField && !draft[activeField.key] ? activeField : undefined;
+        for (const { field, value } of readTextLine(line, pendingField)) {
+          if (field) {
+            sawHeading = true;
+            if (field.key === 'sentence' && draft.sentence) finishDraft();
+            activeField = field;
+          } else if (!activeField || (!activeField.multiline && draft[activeField.key])) {
+            continue;
+          }
+          const key = activeField.key;
+          if (!activeField.multiline || !draft[key]) draft[key] = value;
+          else if (value) draft[key] += '\n' + value;
+        }
+      }
+      finishDraft();
+
+      if (sawHeading && drafts.length) return drafts;
+      const plainLines = lines.filter(line => line && !/^(?:\x60{3,}|~{3,})/.test(line));
+      if (plainLines.length === 1 && /\p{Script=Latin}/u.test(plainLines[0])
+        && !/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}{}\[\]<>]/u.test(plainLines[0])) {
+        return [{ sentence: plainLines[0] }];
+      }
+      throw new Error('「英語：…」などの見出しが付いた回答か、英語だけの1行を貼り付けてください。');
+    }
+
+    function parseWords(value) {
+      return value.split(/\n|[、；;]\s*(?=[\p{Script=Latin}][\p{Script=Latin}'’ -]*\s*[（(=＝])/u)
+        .map(cleanTextLine).filter(Boolean).map(line => {
+          if (/[|｜]/.test(line)) {
+            const [word, pronunciation, meaning, partOfSpeech, note] = line.split(/[|｜]/).map(part => part.trim());
+            return { word, pronunciation, meaning, partOfSpeech, note };
+          }
+          const match = line.match(/^(.+?)(?:[（(]([^）)]+)[）)])?\s*[=＝:：]\s*(.+)$/);
+          return match ? { word: match[1].trim(), pronunciation: match[2], meaning: match[3] } : { word: line };
+        });
+    }
+
+    function parseGrammar(value) {
+      return value.split('\n').map(cleanTextLine).filter(Boolean).map(line => {
+        const parts = line.split(/[|｜]/).map(part => part.trim());
+        if (parts.length >= 3) {
+          const [target, name, ...explanation] = parts;
+          return { target, name, explanation: explanation.join('｜') };
+        }
+        if (parts.length === 2) return { name: parts[0], explanation: parts[1] };
+        return { explanation: line };
+      });
+    }
+
+    function renderTextField(field, draft) {
+      const value = escapeHtml(draft[field.key]);
+      const name = ' name="' + field.key + '"';
+      const control = field.multiline
+        ? '<textarea rows="3"' + name + '>' + value + '</textarea>'
+        : '<input type="text"' + name + ' value="' + value + '"' + (field.key === 'sentence' ? ' required lang="en-US"' : '') + '>';
+      return '<label>' + field.label + (field.key === 'sentence' ? '（必須）' : '') + control + '</label>';
+    }
+
+    function previewTextImport() {
+      textForm.replaceChildren();
+      try {
+        const drafts = parseText(textInput.value);
+        const [mainFields, extraFields] = [textFields.slice(0, 5), textFields.slice(5)];
+        textForm.innerHTML = '<div class="preview">' + drafts.map((draft, index) =>
+          '<fieldset class="preview-item"><legend>カード ' + (index + 1) + '</legend>'
+          + mainFields.map(field => renderTextField(field, draft)).join('')
+          + '<details><summary>タイトル・タグなど</summary>'
+          + extraFields.map(field => renderTextField(field, draft)).join('')
+          + '</details></fieldset>'
+        ).join('') + '</div><div class="button-row"><button type="submit">カードを登録</button></div>';
+        showMessage(drafts.length + '件を読み取りました。内容はここで修正できます。', 'info', textMessage);
+      } catch (error) {
+        showMessage(error.message, 'error', textMessage);
+      }
+    }
+
+    function saveTextImport(event) {
+      event.preventDefault();
+      try {
+        const items = Array.from(textForm.querySelectorAll('fieldset'), fieldset => {
+          const draft = Object.fromEntries(Array.from(fieldset.elements, field => [field.name, field.value.trim()]));
+          if (!draft.sentence) throw new Error('すべてのカードに英語を入力してください。');
+          return normalizeCard({ ...draft, words: parseWords(draft.words), grammar: parseGrammar(draft.grammar) });
+        });
+        if (!items.length) return;
+        registerCards(items);
+        textInput.value = '';
+        textForm.replaceChildren();
+        textMessage.className = 'status';
+      } catch (error) {
+        showMessage(error.message, 'error', textMessage);
+      }
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-button').forEach(button => {
+        const active = button.dataset.tab === tabName;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-selected', String(active));
+      });
+      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+      document.getElementById(`${tabName}Panel`).classList.add('active');
+    }
+
+    function buildPrompt() {
+      const sentences = japaneseInput.value.split('\n').map(line => line.trim()).filter(Boolean);
+      if (!sentences.length) {
+        promptOutput.value = '';
+        showMessage('日本語文を1文以上入力してください。', 'error', promptMessage);
+        return;
+      }
+
+      const sentenceBlocks = sentences.map((sentence, index) => `【日本語文${index + 1}】\n${sentence}`).join('\n\n');
+      promptOutput.value = `次の日本語文を、英語初心者にも使いやすい、自然な英語にしてください。
+そのうえで、日本人の英語初心者にも分かるように分析してください。
+
+${sentenceBlocks}
+
+日本語文ごとに、下の見出しを使って普通のテキストで回答してください。見出しは変えないでください。
+複数あるときは入力順に並べ、カードの間に「---」だけの行を入れてください。
+前置き・あとがき・コードブロックは不要です。単語・表現と文法は1項目1行で、行内の項目を「｜」で区切ってください。
+単語・表現には、単語単体に加えて、日常会話でそのまま使える語のまとまりを優先してください。
+発音記号は米国英語のIPAで、分かる場合だけ記載してください。空欄でも見出しと区切りは残してください。
+
+英語：自然な英文
+発音記号：米国英語のIPA（任意）
+日本語訳：自然な日本語訳
+タイトル：内容が分かる短い日本語タイトル
+元の日本語：入力された日本語文
+タグ：内容を表す短いタグ
+メモ：短い学習ポイント
+単語・表現：
+英語の単語または表現｜発音記号（任意）｜日本語の意味｜品詞または種類｜使い方の補足
+文法：
+英文の該当部分｜文法名｜初心者向けの説明`;
+      showMessage(`${sentences.length}文分のChatGPT用プロンプトを作成しました。`, 'success', promptMessage);
+    }
+
+    async function copyPrompt() {
+      if (!promptOutput.value.trim()) {
+        showMessage('先にプロンプトを作成してください。', 'error', promptMessage);
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(promptOutput.value);
+        showMessage('プロンプトをコピーしました。', 'success', promptMessage);
+      } catch (error) {
+        promptOutput.select();
+        document.execCommand('copy');
+        showMessage('プロンプトを選択してコピーしました。うまくいかない場合は手動でコピーしてください。', 'info', promptMessage);
+      }
+    }
+
+    function speakEnglish(text) {
+      const value = String(text || '').trim();
+      if (!value) return;
+      if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
+        showMessage('このブラウザでは英語音声が利用できない可能性があります', 'info');
+        return;
+      }
+      const utterance = new SpeechSynthesisUtterance(value);
+      const voices = window.speechSynthesis.getVoices();
+      const englishVoice = voices.find(voice => voice.lang.toLowerCase() === 'en-us')
+        || voices.find(voice => /^en(?:-|$)/i.test(voice.lang));
+      if (englishVoice) {
+        utterance.voice = englishVoice;
+      } else {
+        showMessage('このブラウザでは英語音声が利用できない可能性があります', 'info');
+      }
+      utterance.lang = englishVoice?.lang || 'en-US';
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    }
+
+    document.querySelectorAll('.tab-button').forEach(button => button.addEventListener('click', () => switchTab(button.dataset.tab)));
+    document.getElementById('promptButton').addEventListener('click', buildPrompt);
+    document.getElementById('copyPromptButton').addEventListener('click', copyPrompt);
+    document.getElementById('textPreviewButton').addEventListener('click', previewTextImport);
+    textForm.addEventListener('submit', saveTextImport);
+    textInput.addEventListener('input', () => {
+      textForm.replaceChildren();
+      textMessage.className = 'status';
+    });
+    document.getElementById('exportButton').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(cards, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `english-sentence-notebook-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+    document.getElementById('deleteAllButton').addEventListener('click', () => {
+      if (cards.length && confirm('保存したカードをすべて削除します。よろしいですか？')) {
+        cards = [];
+        saveCards();
+        showMessage('すべてのカードを削除しました。', 'success');
+        render();
+      }
+    });
+    cardsEl.addEventListener('click', event => {
+      const button = event.target.closest('button[data-action]');
+      if (!button) return;
+      if (button.dataset.action === 'speak') {
+        speakEnglish(button.dataset.text);
+        return;
+      }
+      const article = button.closest('.card');
+      const card = visibleCards[Number(article.dataset.cardIndex)];
+      if (button.dataset.action === 'toggle') {
+        const expanded = card !== openCard;
+        const current = cardsEl.querySelector('.card-toggle[aria-expanded="true"]');
+        if (current) setCardExpanded(current, false);
+        openCard = expanded ? card : null;
+        if (expanded) {
+          setCardExpanded(button, true);
+          button.scrollIntoView({ block: 'nearest' });
+        }
+        return;
+      }
+      if (button.dataset.action === 'favorite') {
+        card.favorite = !card.favorite;
+      } else if (button.dataset.action === 'delete') {
+        if (!confirm('このカードを削除しますか？')) return;
+        cards = cards.filter(item => item !== card);
+      }
+      saveCards();
+      render();
+    });
+    backupFile.addEventListener('change', async () => {
+      const file = backupFile.files[0];
+      pendingBackup = [];
+      restoreBackupButton.hidden = true;
+      backupMessage.className = 'status';
+      if (!file) return;
+      try {
+        const contents = await file.text();
+        if (backupFile.files[0] !== file) return;
+        pendingBackup = parseBackup(contents);
+        restoreBackupButton.hidden = !pendingBackup.length;
+        const message = pendingBackup.length
+          ? pendingBackup.length + '件のカードを追加できます。'
+          : 'バックアップにカードが入っていません。';
+        showMessage(message, 'info', backupMessage);
+      } catch {
+        if (backupFile.files[0] !== file) return;
+        backupFile.value = '';
+        showMessage('バックアップを読み込めませんでした。このアプリで書き出したファイルを選んでください。', 'error', backupMessage);
+      }
+    });
+    restoreBackupButton.addEventListener('click', () => {
+      if (!pendingBackup.length) return;
+      try {
+        registerCards(pendingBackup);
+        pendingBackup = [];
+        backupFile.value = '';
+        restoreBackupButton.hidden = true;
+        backupMessage.className = 'status';
+      } catch (error) {
+        showMessage(error.message, 'error', backupMessage);
+      }
+    });
+    searchInput.addEventListener('input', render);
+    tagFilter.addEventListener('change', render);
+    favoriteFilterButton.addEventListener('click', () => {
+      showFavoritesOnly = !showFavoritesOnly;
+      render();
+    });
+    hideTranslationsButton.addEventListener('click', () => {
+      const hidden = cardsEl.classList.toggle('hide-translations');
+      hideTranslationsButton.setAttribute('aria-pressed', String(hidden));
+    });
+    render();
+  </script>
+</body>
+</html>
