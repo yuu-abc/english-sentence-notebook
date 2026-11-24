@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="英語センテンスノート">
+  <rect width="512" height="512" fill="#4355c7"/>
+  <rect x="116" y="138" width="280" height="236" rx="36" fill="#fff"/>
+  <path d="M176 336h160" stroke="#dce2f2" stroke-width="12" stroke-linecap="round"/>
+  <path d="M168 206h76v17h-57v30h45v17h-45v31h57v17h-76zm100 0h19l39 76v-76h18v112h-18l-40-76v76h-18z" fill="#3443a3"/>
+  <circle cx="354" cy="351" r="24" fill="#2e9d8f"/>
+  <path d="m344 351 7 7 12-14" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
