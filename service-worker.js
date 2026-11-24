@@ -1,6 +1,7 @@
 "use strict";
 
-const CACHE_NAME = "english-sentence-notebook-v2";
+const CACHE_NAME = "english-sentence-notebook-v3";
+const COMPANION_PATH = new URL("sentence-notebook/", self.registration.scope).pathname;
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -19,7 +20,7 @@ self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
       keys
-        .filter(key => key !== CACHE_NAME)
+        .filter(key => key.startsWith("english-sentence-notebook-") && key !== CACHE_NAME)
         .map(key => caches.delete(key))
     ))
   );
@@ -28,6 +29,10 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
+
+  const url = new URL(event.request.url);
+  if (url.origin === self.location.origin
+    && (url.pathname === COMPANION_PATH.slice(0, -1) || url.pathname.startsWith(COMPANION_PATH))) return;
 
   event.respondWith(
     caches.match(event.request).then(cached => {
